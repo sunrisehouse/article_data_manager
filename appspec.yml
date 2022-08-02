@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: test.txt
-    destination: ~/
+    destination: /home/ec2-user
 hooks:
   ApplicationStart:
     - location: scripts/start.sh
