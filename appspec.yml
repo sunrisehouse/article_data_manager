@@ -1,8 +1,8 @@
 version: 0.0
 os: linux
 files:
-  - source: test.txt
-    destination: /home/ec2-user
+  - source: /
+    destination: /home/ec2-user/lgcns_data_manager
 hooks:
   ApplicationStart:
     - location: scripts/start.sh
