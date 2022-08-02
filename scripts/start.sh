@@ -1,2 +1,4 @@
 #!/bin/bash
-echo "[START]"
+echo "[App Start]================================"
+docker-compose up airflow-init
+docker-compose up
