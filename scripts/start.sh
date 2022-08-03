@@ -1,4 +1,6 @@
 #!/bin/bash
 echo "[App Start]================================"
-docker-compose up airflow-init
-docker-compose up
+sudo docker-compose down --volumes --rmi all
+
+sudo docker-compose up airflow-init
+sudo docker-compose up
