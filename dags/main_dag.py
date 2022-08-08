@@ -5,10 +5,26 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.mysql.hooks.mysql import MySqlHook
 
+from naver_article_crawler import ArticleCrawler, ArticleListFromPressCrawler
+from time import sleep
+
 AWS_CONN_ID = 'aws_default'
 SOURCE_BUCKET_NAME = 'jungwoohan-temp-source-bucket'
 FILE_NAME = 'temp.csv'
 TARGET_BUCKET_NAME = 'jungwoohan-l0-bucket'
+
+def hello():
+    print('hello hh')
+
+def crawl_a_day(oid, date):
+    naver_press_article_list_crawler = ArticleListFromPressCrawler()
+    a_list = naver_press_article_list_crawler.crawl(oid, date)
+    data = []
+    for a in a_list:
+        print(a.get('title'))
+        naver_article_crawler = ArticleCrawler()
+        data.append(naver_article_crawler.crawl(a.get('href')))
+        sleep(3)
 
 def task_s3_log_load():
     hook = S3Hook(aws_conn_id=AWS_CONN_ID)
@@ -42,40 +58,19 @@ with DAG(
     start_date=datetime(2022, 3, 1),
     catchup=False
 ) as dag:
-    mysql_create_operator = PythonOperator(
-        task_id='create_table',
-        python_callable=create_table,
+    hello_operator = PythonOperator(
+        task_id='hello_operator',
+        python_callable=hello,
     )
 
-    # Download a file
-    task_download_from_s3 = PythonOperator(
-        task_id='download_from_s3',
-        python_callable=download_from_s3,
+    crawl_operator = PythonOperator(
+        task_id='crawl_a_day',
+        python_callable=crawl_a_day,
         op_kwargs={
-            'key': FILE_NAME,
-            'bucket_name': SOURCE_BUCKET_NAME,
+            'oid': '032',
+            'date': '20220803',
             'local_path': './'
         }
     )
 
-    # Rename the file
-    task_rename_file = PythonOperator(
-        task_id='rename_file',
-        python_callable=rename_file,
-        op_kwargs={
-            'new_name': 'temp.csv'
-        }
-    )
-
-    # Upload the file
-    task_upload_to_s3 = PythonOperator(
-        task_id='upload_to_s3',
-        python_callable=upload_to_s3,
-        op_kwargs={
-            'filename': f'./{FILE_NAME}',
-            'key': FILE_NAME,
-            'bucket_name': TARGET_BUCKET_NAME
-        }
-    )
-
-    mysql_create_operator >> task_download_from_s3 >> task_rename_file >> task_upload_to_s3
+    hello_operator >> crawl_operator
